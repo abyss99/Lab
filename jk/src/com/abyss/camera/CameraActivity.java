@@ -23,33 +23,44 @@ public class CameraActivity extends Activity {
 	private Camera mCamera;
 	private CameraPreview mPreview;
 
+    private void setContinuous() {
+        Camera.Parameters params = mCamera.getParameters();
+        params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+        mCamera.setParameters(params);
+    }
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.camera_test);
 
 		// Create an instance of Camera
-		mCamera = getCameraInstance();
-		Camera.Parameters params = mCamera.getParameters();
-		params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-		mCamera.setParameters(params);
 
-		// Create our Preview view and set it as the content of our activity.
-		mPreview = new CameraPreview(this, mCamera);
-		FrameLayout preview = (FrameLayout)findViewById(R.id.camera_preview);
-		preview.addView(mPreview);
-
-		Button captureButton = (Button)findViewById(R.id.button_capture);
-		captureButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				// get an image from the camera
-				mCamera.takePicture(null, null, mPicture);
-			}
-		});
 	}
 
-	@Override
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mCamera = getCameraInstance();
+//        Camera.Parameters params = mCamera.getParameters();
+//        params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+//        mCamera.setParameters(params);
+        setContinuous();
+        // Create our Preview view and set it as the content of our activity.
+        mPreview = new CameraPreview(this, mCamera);
+        FrameLayout preview = (FrameLayout)findViewById(R.id.camera_preview);
+        preview.addView(mPreview);
+
+        Button captureButton = (Button)findViewById(R.id.button_capture);
+        captureButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // get an image from the camera
+                mCamera.takePicture(null, null, mPicture);
+            }
+        });
+    }
+
+    @Override
 	protected void onPause() {
 		super.onPause();
 		if (mCamera != null) {
@@ -78,9 +89,25 @@ public class CameraActivity extends Activity {
 
 	public void touchFocus(final int posX, final int posY) {
 		mCamera.stopFaceDetection();
-		setAutoFocusArea(mCamera, posX, posY, 128, true, new Point(mPreview.getWidth(), mPreview.getHeight()));
+        setFocus(posX, posY);
 		mCamera.autoFocus(mAutoFocusCallback);
 	}
+
+    private void setFocus(int posX, int posY) {
+        Log.d(TAG, "posX : posY = " + posX + " : " + posY);
+        Rect rect = new Rect(-1000, -1000, -999, -999);
+        List<Camera.Area> focusAreas = new ArrayList<Camera.Area>();
+        focusAreas.add(new Camera.Area(rect, 1000));
+
+        Camera.Parameters parameters = mCamera.getParameters();
+        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
+        parameters.setFocusAreas(focusAreas);
+        parameters.setMeteringAreas(focusAreas);
+
+        mCamera.setParameters(parameters);
+        setContinuous();
+        Log.d(TAG, mCamera.getParameters().getFocusMode());
+    }
 
 	private void setAutoFocusArea(Camera camera, int posX, int posY, int focusRange, boolean flag, Point point) {
 
@@ -183,13 +210,10 @@ public class CameraActivity extends Activity {
 
 		@Override
 		public void onAutoFocus(boolean success, Camera camera) {
+            Log.d(TAG, ""+success);
 			if (success) {
-				camera.cancelAutoFocus();
+				mCamera.cancelAutoFocus();
 			}
-
-			float focusDistances[] = new float[3];
-			camera.getParameters().getFocusDistances(focusDistances);
-
 		}
 	};
 }
