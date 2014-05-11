@@ -10,8 +10,10 @@ import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
 
 import com.abyss.R;
 
@@ -49,15 +51,29 @@ public class CameraActivity extends Activity {
         mPreview = new CameraPreview(this, mCamera);
         FrameLayout preview = (FrameLayout)findViewById(R.id.camera_preview);
         preview.addView(mPreview);
-
+        changeSize();
         Button captureButton = (Button)findViewById(R.id.button_capture);
         captureButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // get an image from the camera
-                mCamera.takePicture(null, null, mPicture);
+//                mCamera.takePicture(null, null, mPicture);
+                movePosition();
             }
         });
+    }
+
+    private void movePosition() {
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams)mPreview.getLayoutParams();
+        params.leftMargin += 30;
+        mPreview.setLayoutParams(params);
+    }
+
+    private void changeSize() {
+        ViewGroup.LayoutParams params = mPreview.getLayoutParams();
+        params.width = 500;
+        params.height = 800;
+        mPreview.setLayoutParams(params);
     }
 
     @Override
@@ -105,7 +121,7 @@ public class CameraActivity extends Activity {
         parameters.setMeteringAreas(focusAreas);
 
         mCamera.setParameters(parameters);
-        setContinuous();
+
         Log.d(TAG, mCamera.getParameters().getFocusMode());
     }
 
@@ -213,6 +229,7 @@ public class CameraActivity extends Activity {
             Log.d(TAG, ""+success);
 			if (success) {
 				mCamera.cancelAutoFocus();
+                setContinuous();
 			}
 		}
 	};

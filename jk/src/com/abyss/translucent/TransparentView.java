@@ -1,13 +1,16 @@
 package com.abyss.translucent;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Region;
 import android.util.Log;
 import android.view.View;
 
@@ -21,32 +24,65 @@ public class TransparentView extends View {
         super(context);
     }
 
+    //캔버스에 원래있던 도형 (배경화면)
+    private Bitmap makeDst(int w, int h) {
+        Bitmap bm = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bm);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(Color.RED);
+        Rect rect = new Rect(0, 0, w, h);
+        canvas.drawRect(rect, paint);
+        return bm;
+    }
+
+    //캔버스에 추가될 도형
+    private Bitmap makeSrc(int w, int h) {
+        Bitmap bm = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bm);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(Color.BLUE);
+
+        Rect rect = new Rect(0, 0, w, h);
+
+        canvas.drawRect(rect, paint);
+        return bm;
+    }
+
+    //캔버스에 추가될 도형
+    private Bitmap makeSrcOval(int w, int h) {
+        Bitmap bm = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bm);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(Color.BLUE);
+
+
+        RectF rect = new RectF(0, 0, w, h);
+        canvas.drawOval(rect, paint);
+        return bm;
+    }
+
+
+
     @Override
     public void draw(Canvas canvas) {
-        super.draw(canvas);
-        Log.d(Constants.TAG, "width : height = " + getMeasuredWidth() + ":" + getMeasuredHeight());
+        Paint paint = new Paint();
+        paint.setFilterBitmap(false);
+        paint.setShader(null);
+        paint.setColor(Color.BLACK);
+//        Bitmap srcBitmap = makeSrc(getMeasuredWidth() / 2, getMeasuredHeight() / 2);
+//        Bitmap dstBitmap = makeDst(getMeasuredWidth(), getMeasuredHeight());
 
-        canvas.drawColor(Color.TRANSPARENT);
+        Path path = new Path();
+        path.addCircle(getMeasuredWidth() / 2, getMeasuredWidth() / 2, getMeasuredWidth() / 2,
+                Path.Direction.CW);
+        canvas.save();
 
-//        Paint borderPaint = new Paint();
-//        borderPaint.setARGB(128, 128, 128, 128);
-//        borderPaint.setStyle(Paint.Style.STROKE);
-//        borderPaint.setStrokeWidth(4);
-//
-//        RectF drawRect = new RectF();
-//        drawRect.set(100, 100, 100, 100);
-//        canvas.drawRect(drawRect, borderPaint);
-
-
-        Rect square = new Rect();
-        Paint drawColor = new Paint();
-        drawColor.setStyle(Paint.Style.STROKE);
-        drawColor.setStrokeWidth(4);
-        drawColor.setColor(Color.RED);
-//        drawColor.setAlpha(0);
-//        drawColor.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-        square.set(0, 0, 800, 800);
-        canvas.drawRect(square, drawColor);
+        canvas.clipPath(path, Region.Op.DIFFERENCE);
+        canvas.drawColor(Color.RED);
+        //이 부분을 주석처리하지 않으면 구멍이 뚫리지 않은 파란화면만 나온다.
+        //restore 메소드로 인해 clipPath한 부분이 복구되었기 때문이다.
+        canvas.restore();
+        canvas.drawColor(Color.BLUE);
     }
 
     @Override
