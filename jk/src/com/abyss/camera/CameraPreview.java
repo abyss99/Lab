@@ -1,5 +1,6 @@
 package com.abyss.camera;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -8,6 +9,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.RelativeLayout;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,10 +22,12 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     private String TAG = CameraPreview.class.getSimpleName();
     private SurfaceHolder mHolder;
     private Camera mCamera;
+    private Context mContext;
 
     public CameraPreview(Context context, Camera camera) {
         super(context);
         mCamera = camera;
+        mContext = context;
         // Install a SurfaceHolder.Callback so we get notified when the
         // underlying surface is created and destroyed.
         mHolder = getHolder();
@@ -35,9 +39,13 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     public void surfaceCreated(SurfaceHolder holder) {
         // The Surface has been created, now tell the camera where to draw the preview.
         try {
+            for(Camera.Size size : mCamera.getParameters().getSupportedPreviewSizes()) {
+                Log.d(TAG, "width : height = " + size.width + " : " + size.height);
+            }
             mCamera.setPreviewDisplay(holder);
             mCamera.setDisplayOrientation(90);
             mCamera.startPreview();
+
         } catch (IOException e) {
             Log.d(TAG, "Error setting camera preview: " + e.getMessage());
         }

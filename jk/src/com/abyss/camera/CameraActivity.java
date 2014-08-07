@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.abyss.R;
 
@@ -25,11 +26,12 @@ public class CameraActivity extends Activity {
 	private Camera mCamera;
 	private CameraPreview mPreview;
 
-    private void setContinuous() {
-        Camera.Parameters params = mCamera.getParameters();
-        params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-        mCamera.setParameters(params);
-    }
+	private void setContinuous() {
+		Camera.Parameters params = mCamera.getParameters();
+		params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+		mCamera.setParameters(params);
+	}
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -39,44 +41,75 @@ public class CameraActivity extends Activity {
 
 	}
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        mCamera = getCameraInstance();
-//        Camera.Parameters params = mCamera.getParameters();
-//        params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-//        mCamera.setParameters(params);
-        setContinuous();
-        // Create our Preview view and set it as the content of our activity.
-        mPreview = new CameraPreview(this, mCamera);
-        FrameLayout preview = (FrameLayout)findViewById(R.id.camera_preview);
-        preview.addView(mPreview);
-        changeSize();
-        Button captureButton = (Button)findViewById(R.id.button_capture);
-        captureButton.setOnClickListener(new View.OnClickListener() {
+	@Override
+	protected void onResume() {
+		super.onResume();
+		mCamera = getCameraInstance();
+		//        Camera.Parameters params = mCamera.getParameters();
+		//        params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+		//        mCamera.setParameters(params);
+		//        setContinuous();
+		// Create our Preview view and set it as the content of our activity.
+		final Camera.Parameters parameters = mCamera.getParameters();
+		for(Camera.Size size : parameters.getSupportedPreviewSizes()) {
+            Log.d(TAG, ""+size.width + " : " + size.height);
+        }
+		mCamera.setParameters(parameters);
+		mPreview = new CameraPreview(this, mCamera);
+
+		RelativeLayout preview = (RelativeLayout)findViewById(R.id.camera_preview);
+		preview.addView(mPreview);
+		changeSize();
+		Button captureButton = (Button)findViewById(R.id.button_capture);
+		captureButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				// get an image from the camera
+				//                mCamera.takePicture(null, null, mPicture);
+				movePosition();
+			}
+		});
+
+        Button changeButton = (Button)findViewById(R.id.button_change);
+        changeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // get an image from the camera
-//                mCamera.takePicture(null, null, mPicture);
-                movePosition();
+                Camera.Size size = parameters.getSupportedPreviewSizes().get(currentSizeIndex++ % (parameters.getSupportedPreviewSizes().size()));
+                changeSize(size.width, size.height);
             }
         });
-    }
 
-    private void movePosition() {
-        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams)mPreview.getLayoutParams();
-        params.leftMargin += 30;
-        mPreview.setLayoutParams(params);
-    }
+        changeSize(960, 720);
+	}
+    int currentSizeIndex = 0;
 
-    private void changeSize() {
+	private void movePosition() {
+		//        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams)mPreview.getLayoutParams();
+		//        params.leftMargin += 100;
+		//        mPreview.setLayoutParams(params);
+	}
+
+    private void changeSize(int width, int height) {
+        mCamera.stopPreview();
+        Camera.Parameters parameters = mCamera.getParameters();
+        parameters.setPreviewSize(width, height);
+        mCamera.setParameters(parameters);
+        mCamera.startPreview();
         ViewGroup.LayoutParams params = mPreview.getLayoutParams();
-        params.width = 500;
-        params.height = 800;
+        params.width = height;
+        params.height = width;
         mPreview.setLayoutParams(params);
-    }
 
-    @Override
+    }
+	private void changeSize() {
+
+
+		//		        ViewGroup.MarginLayoutParams params2 = (ViewGroup.MarginLayoutParams)mPreview.getLayoutParams();
+		//		        //params2.leftMargin -= 100;
+		//		        mPreview.setLayoutParams(params2);
+	}
+
+	@Override
 	protected void onPause() {
 		super.onPause();
 		if (mCamera != null) {
@@ -88,7 +121,7 @@ public class CameraActivity extends Activity {
 	public static Camera getCameraInstance() {
 		Camera c = null;
 		try {
-			c = Camera.open(); // attempt to get a Camera instance
+			c = Camera.open(1); // attempt to get a Camera instance
 		} catch (Exception e) {
 			// Camera is not available (in use or does not exist)
 		}
@@ -105,25 +138,25 @@ public class CameraActivity extends Activity {
 
 	public void touchFocus(final int posX, final int posY) {
 		mCamera.stopFaceDetection();
-        setFocus(posX, posY);
+		setFocus(posX, posY);
 		mCamera.autoFocus(mAutoFocusCallback);
 	}
 
-    private void setFocus(int posX, int posY) {
-        Log.d(TAG, "posX : posY = " + posX + " : " + posY);
-        Rect rect = new Rect(-1000, -1000, -999, -999);
-        List<Camera.Area> focusAreas = new ArrayList<Camera.Area>();
-        focusAreas.add(new Camera.Area(rect, 1000));
+	private void setFocus(int posX, int posY) {
+		Log.d(TAG, "posX : posY = " + posX + " : " + posY);
+		Rect rect = new Rect(-1000, -1000, -999, -999);
+		List<Camera.Area> focusAreas = new ArrayList<Camera.Area>();
+		focusAreas.add(new Camera.Area(rect, 1000));
 
-        Camera.Parameters parameters = mCamera.getParameters();
-        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
-        parameters.setFocusAreas(focusAreas);
-        parameters.setMeteringAreas(focusAreas);
+		Camera.Parameters parameters = mCamera.getParameters();
+		parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
+		parameters.setFocusAreas(focusAreas);
+		parameters.setMeteringAreas(focusAreas);
 
-        mCamera.setParameters(parameters);
+		mCamera.setParameters(parameters);
 
-        Log.d(TAG, mCamera.getParameters().getFocusMode());
-    }
+		Log.d(TAG, mCamera.getParameters().getFocusMode());
+	}
 
 	private void setAutoFocusArea(Camera camera, int posX, int posY, int focusRange, boolean flag, Point point) {
 
@@ -208,17 +241,17 @@ public class CameraActivity extends Activity {
 			enableFocusModeMacro = false;
 		}
 
-//		if (enableFocusModeMacro == true) {
-//			/*
-//			 * FOCUS_MODE_MACRO을 사용하여 근접 촬영이 가능하도록 해야
-//			 * 지정된 Focus 영역으로 초점이 좀더 선명하게 잡히는 것을 볼 수 있습니다.
-//			 */
-//			parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
-//			Log.d(TAG, "focus mode macro");
-//		} else {
-//			parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-//			Log.d(TAG, "focus mode auto");
-//		}
+		//		if (enableFocusModeMacro == true) {
+		//			/*
+		//			 * FOCUS_MODE_MACRO을 사용하여 근접 촬영이 가능하도록 해야
+		//			 * 지정된 Focus 영역으로 초점이 좀더 선명하게 잡히는 것을 볼 수 있습니다.
+		//			 */
+		//			parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
+		//			Log.d(TAG, "focus mode macro");
+		//		} else {
+		//			parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+		//			Log.d(TAG, "focus mode auto");
+		//		}
 		camera.setParameters(parameters);
 	}
 
@@ -226,10 +259,10 @@ public class CameraActivity extends Activity {
 
 		@Override
 		public void onAutoFocus(boolean success, Camera camera) {
-            Log.d(TAG, ""+success);
+			Log.d(TAG, "" + success);
 			if (success) {
 				mCamera.cancelAutoFocus();
-                setContinuous();
+				setContinuous();
 			}
 		}
 	};

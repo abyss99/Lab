@@ -1,0 +1,13 @@
+<com.abyss.drag.DragLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/dragLayout">
+
+    <View
+        android:id="@+id/drag1"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:background="#AD78CC"/>
+
+</com.abyss.drag.DragLayout>
